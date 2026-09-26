@@ -1,0 +1,28 @@
+rules_version = '2';
+
+// Terapkan file ini di Firebase Console -> Firestore Database -> Rules
+// (atau lewat Firebase CLI: firebase deploy --only firestore:rules)
+//
+// Semua PENULISAN data (daftar akun, kirim chat, ubah pengaturan admin)
+// dilakukan lewat API route di server (pakai Firebase Admin SDK), yang
+// mem-bypass rules ini dan sudah dicek otentikasinya lewat NextAuth.
+//
+// Rules di bawah ini HANYA mengatur akses baca langsung dari browser,
+// yang dipakai untuk fitur realtime (onSnapshot) di panel admin.
+// "role" di sini berasal dari custom claim pada Firebase custom token
+// yang dibuat oleh /api/firebase-token (lihat lib/firebaseAdmin.ts).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read: if request.auth != null
+                   && (request.auth.token.role == 'admin' || request.auth.uid == userId);
+      allow write: if false;
+    }
+
+    match /settings/{docId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+  }
+}
